@@ -61,8 +61,23 @@ async function run(){
       const result = await reviewCollection.insertOne(reviewData);
       res.send(result);
     })
+
+    // query with email
+    app.get('/reviews', async(req, res) =>{
+      let query = {};
+      if(req.query.email){
+        query = {
+          email: req.query.email
+        }
+      }
+      const cursor = reviewCollection.find(query);
+      const result = await cursor.toArray()
+      res.send(result);
+    })
+
     // get request for multiple review data
     app.get('/reviews', async(req, res) =>{
+      console.log(req.query);
       const query = {};
       const cursor = reviewCollection.find(query);
       const result = await cursor.toArray()
@@ -77,6 +92,8 @@ async function run(){
       const result = await cursor.toArray();
       res.send(result);
     })
+
+    
 
   }
   finally{
