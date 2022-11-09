@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const express = require('express');
 const cors = require('cors');
 // const jwt = require('jsonwebtoken');
@@ -22,6 +22,7 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 async function run(){
   try{
     const serviceCollection = client.db('travelaroDbUser').collection('services');
+    const reviewCollection = client.db('travelaroDbUser').collection('reviews');
     
     // services post request
     app.post('/services', async(req, res) =>{
@@ -37,6 +38,30 @@ async function run(){
       const result = await cursor.toArray();
       res.send(result);
     })
+
+    // get limited data
+    app.get('/limited-services', async(req, res) =>{
+      const query = {};
+      const cursor = serviceCollection.find(query).limit(3);
+      const result = await cursor.toArray();
+      res.send(result);
+    })
+
+    // get a signle service for service details
+    app.get('/services/:id', async(req, res) =>{
+      const id = req.params.id;
+      const query = {_id: ObjectId(id)};
+      const result = await serviceCollection.findOne(query);
+      res.send(result);
+    })
+
+    // post request for review
+    app.post('/reviews', async(req, res) =>{
+      const reviewData = req.body;
+      const result = await reviewCollection.insertOne(reviewData);
+      res.send(result);
+    })
+
   }
   finally{
 
