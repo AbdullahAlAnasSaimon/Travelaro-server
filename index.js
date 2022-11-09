@@ -61,11 +61,20 @@ async function run(){
       const result = await reviewCollection.insertOne(reviewData);
       res.send(result);
     })
-
+    // get request for multiple review data
     app.get('/reviews', async(req, res) =>{
       const query = {};
       const cursor = reviewCollection.find(query);
       const result = await cursor.toArray()
+      res.send(result);
+    })
+    
+    // get request for single review data
+    app.get('/reviews/:id', async(req, res) =>{
+      const id = req.params.id;
+      const query = {serviceId: id};
+      const cursor = reviewCollection.find(query);
+      const result = await cursor.toArray();
       res.send(result);
     })
 
