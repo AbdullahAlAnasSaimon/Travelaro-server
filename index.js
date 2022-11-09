@@ -19,10 +19,32 @@ app.get('/', (req, res) =>{
 const uri = `mongodb+srv://${process.env.TRAVELARO_USER}:${process.env.USER_PASSWORD}@cluster0.jt8oxuk.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
+function verifyJWT(req, res, next){
+  const authHeader = req.headers.authorization;
+  if(!authHeader){
+    return res.status(401).send({message: 'Unauthorized access'})
+  }
+  const token = authHeader.split(' ')[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function(err, decoded){
+    if(err){
+      return res.status(401).send({message: 'Unauthorized access'});
+    }
+    req.decoded = decoded;
+    next();
+  })
+}
+
+
 async function run(){
   try{
     const serviceCollection = client.db('travelaroDbUser').collection('services');
     const reviewCollection = client.db('travelaroDbUser').collection('reviews');
+
+    app.post('/jwt', (req, res) =>{
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {expiresIn: '2h'});
+      res.send({token});
+    })
     
     // services post request
     app.post('/services', async(req, res) =>{
@@ -62,8 +84,13 @@ async function run(){
       res.send(result);
     })
 
+    
     // query with email
-    app.get('/reviews', async(req, res) =>{
+    app.get('/reviews', verifyJWT, async(req, res) =>{
+      const decoded = req.decoded;
+      if(decoded.email !== req.query.email){
+        res.status(403).send({message: "Unauthorized access"});
+      }
       let query = {};
       if(req.query.email){
         query = {
@@ -74,7 +101,7 @@ async function run(){
       const result = await cursor.toArray()
       res.send(result);
     })
-
+    
     // get request for multiple review data
     app.get('/reviews', async(req, res) =>{
       console.log(req.query);
