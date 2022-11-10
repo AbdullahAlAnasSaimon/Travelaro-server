@@ -15,7 +15,7 @@ app.get('/', (req, res) =>{
   res.send('Travelaro server is running');
 })
 
-// setup up mongodb 
+// setup up mongodb client
 const uri = `mongodb+srv://${process.env.TRAVELARO_USER}:${process.env.USER_PASSWORD}@cluster0.jt8oxuk.mongodb.net/?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true, serverApi: ServerApiVersion.v1 });
 
@@ -65,7 +65,7 @@ async function run(){
     // get limited data
     app.get('/limited-services', async(req, res) =>{
       const query = {};
-      const cursor = serviceCollection.find(query).limit(3);
+      const cursor = serviceCollection.find(query).limit(3).sort({time: -1});
       const result = await cursor.toArray();
       res.send(result);
     })
@@ -96,14 +96,6 @@ async function run(){
       const result = await cursor.toArray()
       res.send(result);
     })
-    
-    // get request for multiple review data
-    app.get('/reviews/:id', async(req, res) =>{
-      const id = req.params.id;
-      const query = {_id: ObjectId(id)};
-      const result = await reviewCollection.findOne(query);
-      res.send(result);
-    })
 
     // post api for review
     app.post('/reviews', async(req, res) =>{
@@ -118,6 +110,14 @@ async function run(){
       const query = {serviceId: id};
       const cursor = reviewCollection.find(query).sort({insertTime: -1});
       const result = await cursor.toArray();
+      res.send(result);
+    })
+
+    // get request for a signle review data
+    app.get('/review/:id', async(req, res) =>{
+      const id = req.params.id;
+      const query = {_id: ObjectId(id)};
+      const result = await reviewCollection.findOne(query);
       res.send(result);
     })
 
